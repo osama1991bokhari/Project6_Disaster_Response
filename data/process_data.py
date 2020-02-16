@@ -12,8 +12,8 @@ def load_data(messages_filepath, categories_filepath):
     Returns:
     Merged_df pandas_dataframe: the merged dataframe of the two files
     """
-    messages = pd.read_csv('messages.csv')
-    categories = pd.read_csv('categories.csv')
+    messages = pd.read_csv(messages_filepath)
+    categories = pd.read_csv(categories_filepath)
     return messages.merge(categories, on='id')
 
 
@@ -39,12 +39,12 @@ def clean_data(df):
     # rename the columns of `categories`
     categories.columns = category_colnames
     for column in categories:
-    # set each value to be the last character of the string
-    categories[column] = categories[column].str[-1]
+        # set each value to be the last character of the string
+        categories[column] = categories[column].str[-1]
     
-    # convert column from string to numeric
-    categories[column] = categories[column].astype(int)
-    # drop the original categories column from `df`
+        # convert column from string to numeric
+        categories[column] = categories[column].astype(int)
+        # drop the original categories column from `df`
     df.drop('categories', axis = 1, inplace = True)
     # concatenate the original dataframe with the new `categories` dataframe
     df = pd.concat([df, categories], axis=1)

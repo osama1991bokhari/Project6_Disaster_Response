@@ -3,6 +3,7 @@ import time
 import re
 import numpy as np
 import pandas as pd
+import pickle
 from sqlalchemy import create_engine
 
 from nltk.tokenize import word_tokenize
@@ -20,8 +21,6 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.linear_model import SGDClassifier
 from sklearn.svm import SVC
 from sklearn.decomposition import TruncatedSVD
-
-import pickle
 
 import nltk
 nltk.download(['punkt', 'wordnet', 'stopwords'])
@@ -41,22 +40,52 @@ def load_data(database_filepath):
     
     X = df.message
     Y = df.drop(['id', 'message', 'original', 'genre'], axis = 1)
-
+    print(Y.shape)
+    category_names = Y.columns
+    return X,Y,category_names
 
 def tokenize(text):
-    pass
-
+    # Replace URL with urlplaceholder
+    url_regex = 'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+    detected_urls = re.findall(url_regex, text)
+    for url in detected_urls:
+        text = text.replace(url, "urlplaceholder")
+    # Normalize
+    text = re.sub(r"[^a-zA-Z0-9]", " ", text.lower())
+    
+    # Tokenize
+    tokens = word_tokenize(text)
+    
+    # Remove stop words
+    tokens = [token for token in tokens if token not in stopwords.words("english")]
+    
+    lemmatizer = WordNetLemmatizer()
+    
+    clean_tokens = []
+    for tok in tokens:
+        clean_tok = lemmatizer.lemmatize(tok).strip()
+        clean_tokens.append(clean_tok)
+    return clean_tokens
 
 def build_model():
-    pass
+    pipeline = Pipeline([('vect', CountVectorizer(tokenizer=tokenize)),
+                         ('tfidf', TfidfTransformer()),
+                         ('clf', MultiOutputClassifier(tree.DecisionTreeClassifier()))])
+    parameters =  {
+              'clf__estimator__min_samples_split': [2, 4]
+              } 
 
+    model = GridSearchCV(pipeline, param_grid=parameters)
+    return model
 
 def evaluate_model(model, X_test, Y_test, category_names):
-    pass
-
+    Y_pred = model.predict(X_test)
+    for i, col in enumerate(Y_test):
+        print(col)
+        print(classification_report(Y_test[col], Y_pred[:, i]))
 
 def save_model(model, model_filepath):
-    pass
+    pickle.dump(model, open(model_filepath, 'wb'))
 
 
 def main():
