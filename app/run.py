@@ -8,6 +8,7 @@ from nltk.tokenize import word_tokenize
 from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.externals import joblib
 from sqlalchemy import create_engine
 
@@ -28,7 +29,7 @@ def tokenize(text):
 # load data
 engine = create_engine('sqlite:///../data/DisasterResponse.db')
 df = pd.read_sql_table('disaster_messages', engine)
-
+df2 = pd.read_csv('disaster_messages_tokenz.csv')
 # load model
 model = joblib.load("../models/classifier.pkl")
 
@@ -43,8 +44,20 @@ def index():
     genre_counts = df.groupby('genre').count()['message']
     genre_names = list(genre_counts.index)
     
-    cats_counts = cats.mean()*cats.shape[0]
-    cats_names = list(cats_counts.index)
+    word_list = []
+    for tokens in df2.tokenz:
+        word_list.append(tokens)
+    for i,words in enumerate(word_list):
+        word_list[i] = words[1:-1].replace("'","").split(',')    
+    words = []
+    for x in word_list:
+        for single_word in x:
+            words.append(single_word)   
+    df3 = pd.DataFrame(words) 
+    df3['words'] = df3
+    
+    word_counts = df3.words.value_counts()[0:10]
+    word_names = df3.words.value_counts()[0:10].index
 
     
     # create visuals
@@ -71,18 +84,18 @@ def index():
         {
             'data': [
                 Bar(
-                    x=cats_names,
-                    y=cats_counts
+                    x=word_names,
+                    y=word_counts
                 )
             ],
 
             'layout': {
-                'title': 'Distribution of Message Genres',
+                'title': 'Distribution of Commen Words',
                 'yaxis': {
                     'title': "Count"
                 },
                 'xaxis': {
-                    'title': "Genre"
+                    'title': "Word"
                 }
             }
         }

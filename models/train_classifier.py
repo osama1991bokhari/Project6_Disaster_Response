@@ -1,9 +1,9 @@
 import sys
+# import libraries
 import time
 import re
 import numpy as np
 import pandas as pd
-import pickle
 from sqlalchemy import create_engine
 
 from nltk.tokenize import word_tokenize
@@ -13,7 +13,6 @@ from nltk.stem import WordNetLemmatizer
 from sklearn.metrics import classification_report
 from sklearn.model_selection import GridSearchCV
 from sklearn.multioutput import MultiOutputClassifier
-from sklearn import tree
 from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -21,6 +20,9 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.linear_model import SGDClassifier
 from sklearn.svm import SVC
 from sklearn.decomposition import TruncatedSVD
+from sklearn.ensemble import RandomForestClassifier
+
+import pickle
 
 import nltk
 nltk.download(['punkt', 'wordnet', 'stopwords'])
@@ -70,9 +72,10 @@ def tokenize(text):
 def build_model():
     pipeline = Pipeline([('vect', CountVectorizer(tokenizer=tokenize)),
                          ('tfidf', TfidfTransformer()),
-                         ('clf', MultiOutputClassifier(tree.DecisionTreeClassifier()))])
+                         ('clf', MultiOutputClassifier(RandomForestClassifier()))])
     parameters =  {
-              'clf__estimator__min_samples_split': [2, 4]
+        'clf__estimator__bootstrap': [True, False], 
+        'clf__estimator__min_samples_split': [2, 4],
               } 
 
     model = GridSearchCV(pipeline, param_grid=parameters)
